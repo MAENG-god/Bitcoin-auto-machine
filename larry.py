@@ -52,43 +52,28 @@ def rsi(exchange, symbol, cur_price):
         symbol=symbol,
         timeframe='1m', 
         since=None, 
-        limit=25
+        limit=14
     )
     df = pd.DataFrame(data=btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
     df['size'] = df['close'] - df['open']    
     au = 0
     ad = 0
-    cur = cur_price - df.iloc[-1]['open']
-    for i in df.iloc[-2:-15:-1]['size']:
+    # cur = cur_price - df.iloc[-1]['open']
+    for i in df.iloc[1:15]['size']:
         if i >= 0:
             au += i / 14
         else:
             ad += i / 14 * (-1)
-    if cur >= 0:
-        au += cur / 14
-    else:
-        ad += cur / 14 * (-1)
+    # if cur >= 0:
+    #     au += cur / 14
+    # else:
+    #     ad += cur / 14 * (-1)
     rs = au / ad
     rsi = rs / ( 1 + rs) * 100
     
-    ma7 = sum(df.iloc[-1:-8:-1]['close']) / 7
-    ma25 = sum(df.iloc[-1:-26:-1]['close']) / 25
-    ma = ma7 - ma25
-    
-    if ma > 0:
-        if rsi < 65:
-            return "up"
-        elif rsi > 70:
-            return "down"
-    elif ma < 0:
-        if rsi > 30:
-            return "down"
-        elif rsi < 20:
-            return "up"
-    
-    # if rsi >= 65:
-    #     return "down"
-    # elif rsi <= 25:
-    #     return "up"
-    # else:
-    #     return rsi
+    if rsi >= 70:
+        return "down"
+    elif rsi <= 20:
+        return "up"
+    else:
+        return "all"

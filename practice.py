@@ -57,18 +57,12 @@ import requests
 # print(rsi(binance, symbol, cur_price))
 
 
+def a(num1, num2):
+    num = num1 + num2
+    return num
  
-
-
-def post_message(text):
-    channel = "#automachine"
-    token = "xoxb-3352068368884-3346884420261-NcqE2bBfTZtHZSP42wMf0ft4"
-    response = requests.post("https://slack.com/api/chat.postMessage",
-        headers={"Authorization": "Bearer "+token},
-        data={"channel": channel,"text": text}
-    )
-    print(response)
- 
-
- 
-post_message("jocoding")
+def b(num1, num2):
+    num = num1 * num2
+    num = a(num, num)
+    return num
+print(b(2, 3))
