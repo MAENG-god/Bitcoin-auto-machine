@@ -60,9 +60,10 @@ import requests
  
 
 def send_message(messege):
-    url='https://hooks.slack.com/services/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'
+    url='https://hooks.slack.com/services/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'
     data = {'text':messege}
     resp = requests.post(url=url, json=data)
     return resp
-
-send_message("sldjkflsdkf")
+a = 1000000000
+text = "잔액:{}".format(a)
+send_message(text)
