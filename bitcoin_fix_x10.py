@@ -21,11 +21,14 @@ binance = ccxt.binance(config={
     }
 })
 #슬랙 알림
-def send_message(messege):
-    url='https://hooks.slack.com/services/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'
-    data = {'text':messege}
-    resp = requests.post(url=url, json=data)
-    return resp
+def post_message(text):
+    channel = "#automachine"
+    token = "xoxb-3352068368884-3346884420261-NcqE2bBfTZtHZSP42wMf0ft4"
+    response = requests.post("https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer "+token},
+        data={"channel": channel,"text": text}
+    )
+    print(response)
 
 #마켓조회
 # markets = binance.load_markets()
@@ -128,7 +131,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, amoun
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
             text = "드가자~ 잔액:{}, 포지션: long".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
             
     elif cur_price < short_target:      # 현재가 < short 목표가
         if flow == "down":    
@@ -138,7 +141,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, amoun
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
             text = "드가자~ 잔액:{}, 포지션: short".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
 
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trade_history):
@@ -152,7 +155,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trad
             position['type'] = None
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
         if cur_price > target:
             sell_long = target
             target += enter_price * (0.001)
@@ -161,7 +164,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trad
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
     elif position['type'] == 'short':
         if target == 0:    
             target = enter_price * (1 - 0.003)
@@ -170,7 +173,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trad
             position['type'] = None 
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
         if cur_price < target:
             sell_short = target
             target -= enter_price * (0.001)
@@ -179,7 +182,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trad
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
             print(text)
-            send_message(text)
+            post_message(text)
         
 #레버리지 설정
 markets = binance.load_markets()

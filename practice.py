@@ -59,11 +59,16 @@ import requests
 
  
 
-def send_message(messege):
-    url='https://hooks.slack.com/services/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'
-    data = {'text':messege}
-    resp = requests.post(url=url, json=data)
-    return resp
-a = 1000000000
-text = "잔액:{}".format(a)
-send_message(text)
+
+def post_message(text):
+    channel = "#automachine"
+    token = "xoxb-3352068368884-3346884420261-NcqE2bBfTZtHZSP42wMf0ft4"
+    response = requests.post("https://slack.com/api/chat.postMessage",
+        headers={"Authorization": "Bearer "+token},
+        data={"channel": channel,"text": text}
+    )
+    print(response)
+ 
+
+ 
+post_message("jocoding")
