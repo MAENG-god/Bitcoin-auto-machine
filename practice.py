@@ -60,7 +60,7 @@ import requests
  
 
 def send_message(messege):
-    url='https://hooks.slack.com/services/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'
+    url='https://hooks.slack.com/services/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'
     data = {'text':messege}
     resp = requests.post(url=url, json=data)
     return resp
