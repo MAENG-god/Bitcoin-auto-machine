@@ -6,6 +6,7 @@ import pandas as pd
 import datetime
 import larry
 import math
+import requests
 
 #바이낸스 객체 생성
 api_key = "mF7PJ1yW3YtETZi4uxjDpf5NQGJO2bKedAEMnzBagdux37s5vA8IKnAwhq5CPHZy"
@@ -19,6 +20,12 @@ binance = ccxt.binance(config={
         'defaultType': 'future'
     }
 })
+#슬랙 알림
+def send_message(messege):
+    url='https://hooks.slack.com/services/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'
+    data = {'text':messege}
+    resp = requests.post(url=url, json=data)
+    return resp
 
 #마켓조회
 # markets = binance.load_markets()
@@ -96,6 +103,12 @@ print(balance['USDT'])
 #     print(now, btc['last'])
 #     time.sleep(1)
 
+#기록 함수
+# def record(position, win_or_lose, balance):
+#     f = open("/Users/kimmingi/코딩/bitcoin/record.txt", "a")
+#     data = "진입포지션:{}, 승패:{}, 잔고:{} \n".format(position, win_or_lose, balance)
+#     f.write(data)
+#     f.close()
 
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price):
@@ -113,14 +126,19 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, amoun
             position['amount'] = amount
             enter_price = cur_price
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
-            print("드가자~", "잔액:", usdt, "포지션: long")
+            text = "드가자~ 잔액:{}, 포지션: long".format(usdt)
+            print(text)
+            send_message(text)
+            
     elif cur_price < short_target:      # 현재가 < short 목표가
         if flow == "down":    
             position['type'] = 'short'
             position['amount'] = amount
             enter_price = cur_price
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
-            print("드가자~", "잔액:", usdt, "포지션: short")
+            text = "드가자~ 잔액:{}, 포지션: short".format(usdt)
+            print(text)
+            send_message(text)
 
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trade_history):
@@ -132,38 +150,42 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt, trad
         if cur_price < enter_price * (1 - 0.003):
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
             position['type'] = None
-            print("손절;;", "잔액:", usdt)
-            trade_history.append(["잔액", usdt])
+            text = "손절합니다.. 잔액:{}".format(usdt)
+            print(text)
+            send_message(text)
         if cur_price > target:
             sell_long = target
             target += enter_price * (0.001)
         if cur_price < sell_long - 10: 
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
             position['type'] = None 
-            print("컷!", "잔액:", usdt)
-            trade_history.append(["잔액", usdt])
+            text = "개꿀따라시! 잔액:{}".format(usdt)
+            print(text)
+            send_message(text)
     elif position['type'] == 'short':
         if target == 0:    
             target = enter_price * (1 - 0.003)
         if cur_price > enter_price * (1 + 0.003):
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
             position['type'] = None 
-            print("손절;;", "잔액:", usdt)
-            trade_history.append(["잔액", usdt])
+            text = "손절합니다.. 잔액:{}".format(usdt)
+            print(text)
+            send_message(text)
         if cur_price < target:
             sell_short = target
             target -= enter_price * (0.001)
         if cur_price > sell_short + 10:
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
             position['type'] = None 
-            print("컷!", "잔액:", usdt)
-            trade_history.append(["잔액", usdt])
+            text = "개꿀따라시! 잔액:{}".format(usdt)
+            print(text)
+            send_message(text)
         
 #레버리지 설정
 markets = binance.load_markets()
 symbol = "BTC/USDT"
 market = binance.market(symbol)
-leverage = 10
+leverage = 5
 
 resp = binance.fapiPrivate_post_leverage({
     'symbol': market['id'],
@@ -200,7 +222,7 @@ while True:
     amount = cal_amount(usdt, cur_price) * leverage
     
     #시장 흐름 파악
-    flow = larry.cal_market(binance, symbol, cur_price)
+    flow = larry.rsi(binance, symbol, cur_price)
     
     #포지션 진입
     if position['type'] is None:
@@ -214,4 +236,4 @@ while True:
             target = 0
             sell_long = 0
             sell_short = 1000000
-    time.sleep(0.2)
+    time.sleep(0.1)
