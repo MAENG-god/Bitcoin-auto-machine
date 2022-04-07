@@ -20,98 +20,10 @@ binance = ccxt.binance(config={
         'defaultType': 'future'
     }
 })
-#슬랙 알림
-# def post_message(text):
-#     channel = "#automachine"
-#     token = "xoxb-3352068368884-3346884420261-NcqE2bBfTZtHZSP42wMf0ft4"
-#     response = requests.post("https://slack.com/api/chat.postMessage",
-#         headers={"Authorization": "Bearer "+token},
-#         data={"channel": channel,"text": text}
-#     )
-#     print(response)
 
-#마켓조회
-# markets = binance.load_markets()
-# for m in markets:
-#     print(m)
-    
 #선물 잔고 조회
 balance = binance.fetch_balance(params={"type": "future"})
 print(balance['USDT'])
-
-#현재가 조회
-# btc = binance.fetch_ticker("BTC/USDT")
-# print(btc)
-
-#과거 데이터 조회
-# btc = binance.fetch_ohlcv(
-#     symbol="BTC/USDT", 
-#     timeframe='1d', 
-#     since=None, 
-#     limit=10)
-
-# df = pd.DataFrame(btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
-# df['datetime'] = pd.to_datetime(df['datetime'], unit='ms')
-# df.set_index('datetime', inplace=True)
-# print(df)
-
-#매수/롱 포지션 진입
-# order = binance.create_market_buy_order(
-#     symbol = "BTC/USDT",
-#     amount = 0.001
-# )
-
-# pprint.pprint(order)
-
-#매수/롱 포지션 정리
-# order = binance.create_market_sell_order(
-#     symbol="BTC/USDT",
-#     amount=0.001
-# )
-
-# pprint.pprint(order)
-
-#매도/숏 포지션 진입
-# order = binance.create_market_sell_order(
-#     symbol="BTC/USDT",
-#     amount=0.001, 
-# )
-
-# pprint.pprint(order)
-
-#매도/숏 포지션 정리
-# order = binance.create_market_buy_order(
-#     symbol = "BTC/USDT",
-#     amount = 0.001
-# )
-
-# pprint.pprint(order)
-
-#대기 주문 조회
-# open_orders = binance.fetch_open_orders(
-#     symbol="BTC/USDT"
-# )
-# pprint.pprint(open_orders)
-
-#선물 현재가 출력하기
-# while True: 
-#     btc = binance.fetch_ticker(symbol)
-#     print(btc['last'])
-#     time.sleep(1)
-
-#현재 시간 출력하기
-# while True: 
-#     btc = binance.fetch_ticker(symbol)
-#     now = datetime.datetime.now()
-#     print(now, btc['last'])
-#     time.sleep(1)
-
-#기록 함수
-# def record(position, win_or_lose, balance):
-#     f = open("/Users/kimmingi/코딩/bitcoin/record.txt", "a")
-#     data = "진입포지션:{}, 승패:{}, 잔고:{} \n".format(position, win_or_lose, balance)
-#     f.write(data)
-#     f.close()
 
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price):
