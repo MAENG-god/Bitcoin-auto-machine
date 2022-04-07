@@ -4,7 +4,7 @@ import time
 from numpy import short
 import pandas as pd
 import datetime
-import larry
+import larry_x10
 import math
 import requests
 
@@ -49,7 +49,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
     global enter_price
     amount = cal_amount(usdt, cur_price) * leverage
     if cur_price > long_target:         # 현재가 > long 목표가
-        if flow != "don't_up":
+        if flow == "up":
             position['type'] = 'long'
             position['amount'] = amount
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
@@ -58,7 +58,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
             print(text)
             
     elif cur_price < short_target:      # 현재가 < short 목표가
-        if flow != "don't_down":    
+        if flow == "down":    
             position['type'] = 'short'
             position['amount'] = amount
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
@@ -72,18 +72,16 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
     amount = position['amount']
     if position['type'] == 'long':
         if target == 0:
-            target = enter_price * (1 + 0.01)
+            target = enter_price * (1 + 0.008)
         #분할매수
         if second_chance == 1:
             if cur_price < enter_price * (1 - 0.001):
-                print(usdt)
                 amount2 = cal_amount2(usdt, cur_price) * leverage
                 position['amount'] += amount2
                 exchange.create_market_buy_order(symbol=symbol, amount=amount2)
                 second_chance = 0
         elif third_chance == 1:
             if cur_price < enter_price * (1 - 0.002):
-                print(usdt)
                 amount3 = cal_amount3(usdt, cur_price) * leverage
                 position['amount'] += amount3
                 exchange.create_market_buy_order(symbol=symbol, amount=amount3)
@@ -104,18 +102,16 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             print(text)
     elif position['type'] == 'short':
         if target == 0:    
-            target = enter_price * (1 - 0.01)
+            target = enter_price * (1 - 0.008)
         #분할매수
         if second_chance == 1:
             if cur_price > enter_price * (1 + 0.001):
-                print(usdt)
                 amount2 = cal_amount2(usdt, cur_price) * leverage
                 position['amount'] += amount2
                 exchange.create_market_sell_order(symbol=symbol, amount=amount2)
                 second_chance = 0
         elif third_chance == 1:
             if cur_price > enter_price * (1 + 0.002):
-                print(usdt)
                 amount3 = cal_amount3(usdt, cur_price) * leverage
                 position['amount'] += amount3
                 exchange.create_market_sell_order(symbol=symbol, amount=amount3)
@@ -139,7 +135,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
 markets = binance.load_markets()
 symbol = "BTC/USDT"
 market = binance.market(symbol)
-leverage = 5
+leverage = 10
 
 resp = binance.fapiPrivate_post_leverage({
     'symbol': market['id'],
@@ -148,7 +144,7 @@ resp = binance.fapiPrivate_post_leverage({
         
 #동작
 symbol = "BTC/USDT"
-long_target, short_target = larry.cal_target(binance, symbol)
+long_target, short_target = larry_x10.cal_target(binance, symbol)
 balance = binance.fetch_balance()
 usdt = balance['free']['USDT']
 position = {
@@ -165,7 +161,7 @@ second_chance = 1
 third_chance = 1
 
 while True: 
-    long_target, short_target = larry.cal_target(binance, symbol)
+    long_target, short_target = larry_x10.cal_target(binance, symbol)
     try:
         balance = binance.fetch_balance()
         usdt = balance['free']['USDT']
@@ -177,7 +173,7 @@ while True:
     cur_price = ticker['last']
     
     #시장 흐름 파악
-    flow = larry.rsi(binance, symbol, cur_price)
+    flow = larry_x10.rsi(binance, symbol, cur_price)
     
     #포지션 진입
     if position['type'] is None:
