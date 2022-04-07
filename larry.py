@@ -4,7 +4,7 @@ import pandas as pd
 def cal_target(exchange, symbol):
     btc = exchange.fetch_ohlcv(
         symbol=symbol,
-        timeframe='1m', 
+        timeframe='5m', 
         since=None, 
         limit=10
     )
@@ -46,11 +46,11 @@ def cal_market(exchange, symbol, cur_price):
     elif fift < 0 and fift2 < 0:
         return "down"
     
-#rsi 지표 & 이평선으로 포지션 선정
+#rsi 지표 포지션 선정
 def rsi(exchange, symbol, cur_price):
     btc = exchange.fetch_ohlcv(
         symbol=symbol,
-        timeframe='1m', 
+        timeframe='5m', 
         since=None, 
         limit=14
     )
@@ -71,9 +71,9 @@ def rsi(exchange, symbol, cur_price):
     rs = au / ad
     rsi = rs / ( 1 + rs) * 100
     
-    if rsi >= 70:
-        return "down"
-    elif rsi <= 20:
-        return "up"
+    if rsi >= 60:
+        return "don't_up"
+    elif rsi <= 30:
+        return "don't_down"
     else:
         return "all"

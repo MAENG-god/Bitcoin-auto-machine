@@ -115,7 +115,7 @@ print(balance['USDT'])
 
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price):
-    portion = 0.33
+    portion = 0.4
     usdt_trade = usdt_balance * portion
     amount = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
     return amount 
@@ -137,20 +137,20 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
     global enter_price
     amount = cal_amount(usdt, cur_price) * leverage
     if cur_price > long_target:         # 현재가 > long 목표가
-        if flow == "up" or flow == "all":
+        if flow != "don't_up":
             position['type'] = 'long'
             position['amount'] = amount
-            enter_price = cur_price
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
+            enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: long".format(usdt)
             print(text)
             
     elif cur_price < short_target:      # 현재가 < short 목표가
-        if flow == "down" or flow == "all":    
+        if flow != "don't_down":    
             position['type'] = 'short'
             position['amount'] = amount
-            enter_price = cur_price
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
+            enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: short".format(usdt)
             print(text)
 
@@ -160,7 +160,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
     amount = position['amount']
     if position['type'] == 'long':
         if target == 0:
-            target = enter_price * (1 + 0.003)
+            target = enter_price * (1 + 0.01)
         #분할매수
         if second_chance == 1:
             if cur_price < enter_price * (1 - 0.001):
@@ -175,22 +175,22 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 exchange.create_market_buy_order(symbol=symbol, amount=amount3)
                 third_chance = 0
                 
-        elif cur_price < enter_price * (1 - 0.003):
+        elif cur_price < enter_price * (1 - 0.006):
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
             position['type'] = None
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
         if cur_price > target:
             sell_long = target
-            target += enter_price * (0.001)
-        if cur_price < sell_long - 10: 
+            target += enter_price * (0.002)
+        if cur_price < sell_long - enter_price * (0.001): 
             exchange.create_market_sell_order(symbol=symbol, amount=amount)
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
             print(text)
     elif position['type'] == 'short':
         if target == 0:    
-            target = enter_price * (1 - 0.003)
+            target = enter_price * (1 - 0.01)
         #분할매수
         if second_chance == 1:
             if cur_price > enter_price * (1 + 0.001):
@@ -205,15 +205,15 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 exchange.create_market_sell_order(symbol=symbol, amount=amount3)
                 third_chance = 0
                 
-        elif cur_price > enter_price * (1 + 0.003):
+        elif cur_price > enter_price * (1 + 0.006):
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
             position['type'] = None 
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
         if cur_price < target:
             sell_short = target
-            target -= enter_price * (0.001)
-        if cur_price > sell_short + 10:
+            target -= enter_price * (0.002)
+        if cur_price > sell_short + enter_price * (0.001):
             exchange.create_market_buy_order(symbol=symbol, amount=amount)
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
@@ -278,4 +278,4 @@ while True:
                 sell_short = 1000000
                 second_chance = 1
                 third_chance = 1
-    time.sleep(0.1)
+    time.sleep(0.2)
