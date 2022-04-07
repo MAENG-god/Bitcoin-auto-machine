@@ -59,7 +59,7 @@ def rsi(exchange, symbol, cur_price):
     au = 0
     ad = 0
     # cur = cur_price - df.iloc[-1]['open']
-    for i in df.iloc[1:15]['size']:
+    for i in df.iloc[:14]['size']:
         if i >= 0:
             au += i / 14
         else:

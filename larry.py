@@ -52,14 +52,14 @@ def rsi(exchange, symbol, cur_price):
         symbol=symbol,
         timeframe='5m', 
         since=None, 
-        limit=14
+        limit=15
     )
     df = pd.DataFrame(data=btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
     df['size'] = df['close'] - df['open']    
     au = 0
     ad = 0
     # cur = cur_price - df.iloc[-1]['open']
-    for i in df.iloc[1:15]['size']:
+    for i in df.iloc[:14]['size']:
         if i >= 0:
             au += i / 14
         else:

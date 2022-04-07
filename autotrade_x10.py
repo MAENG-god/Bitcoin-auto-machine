@@ -191,3 +191,4 @@ while True:
                 second_chance = 1
                 third_chance = 1
     time.sleep(0.2)
+
