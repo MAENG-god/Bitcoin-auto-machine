@@ -87,7 +87,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 exchange.create_market_buy_order(symbol=symbol, amount=amount3)
                 third_chance = 0
                 
-        elif cur_price < enter_price * (1 - 0.006):
+        elif cur_price < enter_price * (1 - 0.004):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
             text = "손절합니다.. 잔액:{}".format(usdt)
@@ -117,7 +117,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 exchange.create_market_sell_order(symbol=symbol, amount=amount3)
                 third_chance = 0
                 
-        elif cur_price > enter_price * (1 + 0.006):
+        elif cur_price > enter_price * (1 + 0.004):
             exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "손절합니다.. 잔액:{}".format(usdt)
