@@ -69,7 +69,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
     global target, sell_long, sell_short, second_chance, third_chance
-    amount = position['amount']
+
     if position['type'] == 'long':
         if target == 0:
             target = enter_price * (1 + 0.008)
@@ -88,7 +88,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 third_chance = 0
                 
         elif cur_price < enter_price * (1 - 0.006):
-            exchange.create_market_sell_order(symbol=symbol, amount=amount)
+            exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
@@ -96,7 +96,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             sell_long = target
             target += enter_price * (0.002)
         if cur_price < sell_long - enter_price * (0.001): 
-            exchange.create_market_sell_order(symbol=symbol, amount=amount)
+            exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
             print(text)
@@ -118,7 +118,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
                 third_chance = 0
                 
         elif cur_price > enter_price * (1 + 0.006):
-            exchange.create_market_buy_order(symbol=symbol, amount=amount)
+            exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "손절합니다.. 잔액:{}".format(usdt)
             print(text)
@@ -126,7 +126,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             sell_short = target
             target -= enter_price * (0.002)
         if cur_price > sell_short + enter_price * (0.001):
-            exchange.create_market_buy_order(symbol=symbol, amount=amount)
+            exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
             print(text)

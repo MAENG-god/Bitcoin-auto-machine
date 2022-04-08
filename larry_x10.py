@@ -52,7 +52,7 @@ def rsi(exchange, symbol, cur_price):
         symbol=symbol,
         timeframe='5m', 
         since=None, 
-        limit=14
+        limit=15
     )
     df = pd.DataFrame(data=btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
     df['size'] = df['close'] - df['open']    
