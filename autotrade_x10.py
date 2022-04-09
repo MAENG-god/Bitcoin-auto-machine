@@ -29,30 +29,30 @@ print(balance['USDT'])
 def cal_amount(usdt_balance, cur_price):
     portion = 0.5
     usdt_trade = usdt_balance * portion
-    amount = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount 
+    amount1 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
+    return amount1
 
 def cal_amount2(usdt_balance, cur_price):
     portion = 0.5
     usdt_trade = usdt_balance * portion
-    amount = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount 
+    amount2 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
+    return amount2 
 
 def cal_amount3(usdt_balance, cur_price):
     portion = 0.99
     usdt_trade = usdt_balance * portion
-    amount = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount 
+    amount3 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
+    return amount3 
 
 #포지션 진입 함수
 def enter_position(exchange, symbol, cur_price, long_target, short_target, position, usdt):
     global enter_price
-    amount = cal_amount(usdt, cur_price) * leverage
+    amount1 = cal_amount(usdt, cur_price) * leverage
     if cur_price > long_target:         # 현재가 > long 목표가
         if flow == "up":
             position['type'] = 'long'
-            position['amount'] = amount
-            exchange.create_market_buy_order(symbol=symbol, amount=amount)
+            position['amount'] = amount1
+            exchange.create_market_buy_order(symbol=symbol, amount=amount1)
             enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: long".format(usdt)
             print(text)
@@ -60,8 +60,8 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
     elif cur_price < short_target:      # 현재가 < short 목표가
         if flow == "down":    
             position['type'] = 'short'
-            position['amount'] = amount
-            exchange.create_market_sell_order(symbol=symbol, amount=amount)
+            position['amount'] = amount1
+            exchange.create_market_sell_order(symbol=symbol, amount=amount1)
             enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: short".format(usdt)
             print(text)
@@ -190,5 +190,5 @@ while True:
                 sell_short = 1000000
                 second_chance = 1
                 third_chance = 1
+                position['amount'] = 0
     time.sleep(0.2)
-
