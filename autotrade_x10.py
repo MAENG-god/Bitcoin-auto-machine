@@ -26,28 +26,28 @@ balance = binance.fetch_balance(params={"type": "future"})
 print(balance['USDT'])
 
 #수량계산 함수
-def cal_amount(usdt_balance, cur_price):
+def cal_amount(usdt_balance, cur_price, leverage):
     portion = 0.5
     usdt_trade = usdt_balance * portion
-    amount1 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount1
+    amount1 = math.floor((usdt_trade * 1000000)/cur_price) * leverage / 1000000
+    return round(amount1, 3)
 
-def cal_amount2(usdt_balance, cur_price):
+def cal_amount2(usdt_balance, cur_price, leverage):
     portion = 0.5
     usdt_trade = usdt_balance * portion
-    amount2 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount2 
+    amount2 = math.floor((usdt_trade * 1000000)/cur_price) * leverage / 1000000
+    return round(amount2, 3) 
 
-def cal_amount3(usdt_balance, cur_price):
+def cal_amount3(usdt_balance, cur_price, leverage):
     portion = 0.99
     usdt_trade = usdt_balance * portion
-    amount3 = math.floor((usdt_trade * 1000000)/cur_price) / 1000000
-    return amount3 
+    amount3 = math.floor((usdt_trade * 1000000)/cur_price) * leverage / 1000000
+    return math.floor(amount3 * 1000) / 1000 
 
 #포지션 진입 함수
 def enter_position(exchange, symbol, cur_price, long_target, short_target, position, usdt):
     global enter_price
-    amount1 = cal_amount(usdt, cur_price) * leverage
+    amount1 = cal_amount(usdt, cur_price, leverage)
     if cur_price > long_target:         # 현재가 > long 목표가
         if flow == "up":
             position['type'] = 'long'
@@ -76,13 +76,13 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
         #분할매수
         if second_chance == 1:
             if cur_price < enter_price * (1 - 0.001):
-                amount2 = cal_amount2(usdt, cur_price) * leverage
+                amount2 = cal_amount2(usdt, cur_price, leverage)
                 position['amount'] += amount2
                 exchange.create_market_buy_order(symbol=symbol, amount=amount2)
                 second_chance = 0
         elif third_chance == 1:
             if cur_price < enter_price * (1 - 0.002):
-                amount3 = cal_amount3(usdt, cur_price) * leverage
+                amount3 = cal_amount3(usdt, cur_price, leverage)
                 position['amount'] += amount3
                 exchange.create_market_buy_order(symbol=symbol, amount=amount3)
                 third_chance = 0
@@ -106,13 +106,13 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
         #분할매수
         if second_chance == 1:
             if cur_price > enter_price * (1 + 0.001):
-                amount2 = cal_amount2(usdt, cur_price) * leverage
+                amount2 = cal_amount2(usdt, cur_price, leverage)
                 position['amount'] += amount2
                 exchange.create_market_sell_order(symbol=symbol, amount=amount2)
                 second_chance = 0
         elif third_chance == 1:
             if cur_price > enter_price * (1 + 0.002):
-                amount3 = cal_amount3(usdt, cur_price) * leverage
+                amount3 = cal_amount3(usdt, cur_price, leverage)
                 position['amount'] += amount3
                 exchange.create_market_sell_order(symbol=symbol, amount=amount3)
                 third_chance = 0
@@ -152,7 +152,6 @@ position = {
     "amount": 0
 } 
 enter_price = 0
-trade_history = []
 
 target = 0
 sell_long = 0
@@ -176,12 +175,12 @@ while True:
     flow = larry_x10.rsi(binance, symbol, cur_price)
     
     #포지션 진입
-    if position['type'] is None:
+    if position['type'] == None:
         if usdt != -1:
             enter_position(binance, symbol, cur_price, long_target, short_target, position, usdt)
     
     #포지션 정리
-    if position['type'] is not None:   
+    else:   
         if usdt != -1: 
             exit_position(binance, symbol, position, cur_price, enter_price, usdt)
             if position['type'] is None:
