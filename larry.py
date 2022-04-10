@@ -77,3 +77,4 @@ def rsi(exchange, symbol, cur_price):
         return "don't_down"
     else:
         return "all"
+    
