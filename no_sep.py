@@ -7,6 +7,7 @@ import datetime
 import larry_x10
 import math
 import requests
+import telegram
 
 #바이낸스 객체 생성
 api_key = "mF7PJ1yW3YtETZi4uxjDpf5NQGJO2bKedAEMnzBagdux37s5vA8IKnAwhq5CPHZy"
@@ -20,6 +21,13 @@ binance = ccxt.binance(config={
         'defaultType': 'future'
     }
 })
+
+#메세지
+def send_message(text):
+    tele_token = "5210226721:AAG95BNFRPXRME5MU_ytI_JIx7wgiW1XASU"
+    chat_id = 5135122806
+    bot = telegram.Bot(token = tele_token)
+    bot.sendMessage(chat_id = chat_id, text = text)
 
 #선물 잔고 조회
 balance = binance.fetch_balance(params={"type": "future"})
@@ -43,7 +51,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
             exchange.create_market_buy_order(symbol=symbol, amount=amount1)
             enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: long".format(usdt)
-            print(text)
+            send_message(text)
             
     elif cur_price < short_target:      # 현재가 < short 목표가
         if flow == "down":    
@@ -52,7 +60,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
             exchange.create_market_sell_order(symbol=symbol, amount=amount1)
             enter_price = cur_price
             text = "드가자~ 잔액:{}, 포지션: short".format(usdt)
-            print(text)
+            send_message(text)
 
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
@@ -66,13 +74,13 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
             text = "스위칭! 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
         
         if cur_price < enter_price * (1 - 0.004):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
             text = "손절합니다.. 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
         if cur_price > target:
             sell_long = target
             target += enter_price * (0.002)
@@ -80,7 +88,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
     elif position['type'] == 'short':
         if target == 0:    
             target = enter_price * (1 - 0.008)
@@ -89,13 +97,13 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
             text = "스위칭! 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
 
         if cur_price > enter_price * (1 + 0.004):
             exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "손절합니다.. 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
         if cur_price < target:
             sell_short = target
             target -= enter_price * (0.002)
@@ -103,7 +111,7 @@ def exit_position(exchange, symbol, position, cur_price, enter_price, usdt):
             exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
             text = "개꿀따라시! 잔액:{}".format(usdt)
-            print(text)
+            send_message(text)
         
 #레버리지 설정
 markets = binance.load_markets()
