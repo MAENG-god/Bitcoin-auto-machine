@@ -41,7 +41,7 @@ def cal_amount(usdt_balance, cur_price, leverage):
     return amount1
 
 #포지션 진입 함수
-def enter_position(exchange, symbol, cur_price, long_target, short_target, position, usdt):
+def enter_position(exchange, symbol, cur_price, long_target, short_target, position, usdt, candle_shape):
     global enter_price
     amount1 = cal_amount(usdt, cur_price, leverage)
     if flow == "up":         #rsi가 40 이하
@@ -143,27 +143,25 @@ while True:
         
         #시장 흐름 파악
         flow = tools.rsi(binance, symbol, cur_price)
-        candle_shape = tools.candle(binance, symbol)
+        candle_shape = tools.candle(binance, symbol, cur_price)
         
         #포지션 진입
         if position['type'] == None:
-            if usdt != -1:
-                enter_position(binance, symbol, cur_price, long_target, short_target, position, usdt)
+            enter_position(binance, symbol, cur_price, long_target, short_target, position, usdt, candle_shape)
         
         #포지션 정리
-        else:   
-            if usdt != -1: 
-                exit_position(binance, symbol, position, cur_price, enter_price)
-                if position['type'] is None:
-                    target = 0
-                    sell_long = 0
-                    sell_short = 1000000
-                    second_chance = 1
-                    third_chance = 1
-                    position['amount'] = 0
-                    balance = binance.fetch_balance()
-                    usdt = balance['free']['USDT']
-                    send_message("잔액:{}".format(usdt))
+        else:    
+            exit_position(binance, symbol, position, cur_price, enter_price)
+            if position['type'] is None:
+                target = 0
+                sell_long = 0
+                sell_short = 1000000
+                second_chance = 1
+                third_chance = 1
+                position['amount'] = 0
+                balance = binance.fetch_balance()
+                usdt = balance['free']['USDT']
+                send_message("잔액:{}".format(usdt))
         time.sleep(1)
     except Exception as e:
         print(e)
