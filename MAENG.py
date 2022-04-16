@@ -46,7 +46,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
     amount1 = cal_amount(usdt, cur_price, leverage)
     if flow == "up":         #rsi가 40 이하
         if cur_price > long_target:
-            if candle_shape == "night star" or candle_shape == "hanging" or candle_shape == "meteor" or candle_shape == "down grap":
+            if candle_shape == "morning star" or candle_shape == "hammer" or candle_shape == "reverse hammer" or candle_shape == "up grap":
                 position['type'] = 'long'
                 position['amount'] = amount1
                 exchange.create_market_buy_order(symbol=symbol, amount=amount1)
@@ -56,7 +56,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
             
     elif flow == "down":      #rsi가 60 이상
         if cur_price < short_target:
-            if candle_shape == "morning star" or candle_shape == "hammer" or candle_shape == "reverse hammer" or candle_shape == "up grap":    
+            if candle_shape == "night star" or candle_shape == "hanging" or candle_shape == "meteor" or candle_shape == "down grap":    
                 position['type'] = 'short'
                 position['amount'] = amount1
                 exchange.create_market_sell_order(symbol=symbol, amount=amount1)
@@ -66,8 +66,7 @@ def enter_position(exchange, symbol, cur_price, long_target, short_target, posit
 
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price):
-    global target, sell_long, sell_short, second_chance, third_chance
-
+    global target, sell_long, sell_short
     if position['type'] == 'long':
         if target == 0:
             target = enter_price * (1 + 0.008)
@@ -156,8 +155,6 @@ while True:
                 target = 0
                 sell_long = 0
                 sell_short = 1000000
-                second_chance = 1
-                third_chance = 1
                 position['amount'] = 0
                 balance = binance.fetch_balance()
                 usdt = balance['free']['USDT']
