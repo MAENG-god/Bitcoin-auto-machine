@@ -53,11 +53,27 @@ def rsi(exchange, symbol, cur_price):
     rs = au / ad
     rsi = rs / ( 1 + rs) * 100
     
-    if rsi >= 60:
+    if rsi >= 50:
         return "down"
-    elif rsi <= 40:
+    elif rsi < 50:
         return "up"
 
+#이동평균선
+def ma(exchange, symbol):
+    btc = exchange.fetch_ohlcv(
+        symbol=symbol,
+        timeframe='5m', 
+        since=None, 
+        limit=26
+    )
+    df = pd.DataFrame(data=btc, columns=['datetime', 'open', 'high', 'low', 'close', 'volume'])
+    ma7 = sum(df.iloc[-1:-8:-1]['close']) / 7
+    ma25 = sum(df.iloc[-1:-26:-1]['close']) / 25
+    ma = ma7 - ma25
+    if ma > 0:
+        return "up"
+    else:
+        return "down"
 #스위칭
 def rsi_2(exchange, symbol, cur_price):
     btc = exchange.fetch_ohlcv(
@@ -124,11 +140,13 @@ def candle(exchange, symbol, cur_price):
             if df.iloc[-3]['body'] > df.iloc[-2]['body'] * 2:
                 if cur_price < df.iloc[-3]['close'] - df.iloc[-3]['body'] * 0.5:
                     return "night star" # 저녁별형
-        elif df.iloc[-2]['body'] > 20 and min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > df.iloc[-2]['body'] * 2:
-            if cur_price < min(df.iloc[-2]['open'], df.iloc[-2]['close']):
-                return "hanging" # 교수형
-        elif df.iloc[-2]['body'] > 20 and df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > df.iloc[-2]['body'] * 2:
-            return "meteor" # 유성형
+        elif min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > df.iloc[-2]['body'] * 2:
+            if min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > 40:
+                if cur_price < min(df.iloc[-2]['open'], df.iloc[-2]['close']):
+                    return "hanging" # 교수형
+        elif df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > df.iloc[-2]['body'] * 2:
+            if df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > 40:
+                return "meteor" # 유성형
         elif df.iloc[-2]['body'] > df.iloc[-3]['body']:
             if df.iloc[-2]['close'] - df.iloc[-2]['open'] < 0 and df.iloc[-3]['close'] - df.iloc[-3]['open'] > 0:
                 return "down grap" # 하락장악형
@@ -138,11 +156,13 @@ def candle(exchange, symbol, cur_price):
             if df.iloc[-3]['body'] > df.iloc[-2]['body'] * 2:
                 if cur_price > df.iloc[-3]['close'] + df.iloc[-3]['body'] * 0.5:
                     return "mornig star" # 샛별형
-        elif df.iloc[-2]['body'] > 20 and min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > df.iloc[-2]['body'] * 2:
-            return "hammer" # 망치형
-        elif df.iloc[-2]['body'] > 20 and df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > df.iloc[-2]['body'] * 2:
-            if cur_price > max(df.iloc[-2]['open'], df.iloc[-2]['close']):
-                return "reverse hammer" # 역망치형
+        elif min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > df.iloc[-2]['body'] * 2:
+            if min(df.iloc[-2]['open'], df.iloc[-2]['close']) - df.iloc[-2]['low'] > 40:
+                return "hammer" # 망치형
+        elif df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > df.iloc[-2]['body'] * 2:
+            if df.iloc[-2]['high'] - max(df.iloc[-2]['open'], df.iloc[-2]['close']) > 40:
+                if cur_price > max(df.iloc[-2]['open'], df.iloc[-2]['close']):
+                    return "reverse hammer" # 역망치형
         elif df.iloc[-2]['body'] > df.iloc[-3]['body']:
             if df.iloc[-2]['close'] - df.iloc[-2]['open'] > 0 and df.iloc[-3]['close'] - df.iloc[-3]['open'] < 0:
                 return "up grap" # 상승장악형
