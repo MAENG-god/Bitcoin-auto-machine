@@ -29,10 +29,6 @@ def send_message(text):
     bot = telegram.Bot(token = tele_token)
     bot.sendMessage(chat_id = chat_id, text = text)
 
-#선물 잔고 조회
-balance = binance.fetch_balance(params={"type": "future"})
-print(balance['USDT'])
-
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price, leverage):
     portion = 0.99
@@ -41,81 +37,184 @@ def cal_amount(usdt_balance, cur_price, leverage):
     return amount1
 
 #포지션 진입 함수
-def enter_position(exchange, symbol, cur_price, long_target, short_target, position, usdt, candle_shape):
-    global enter_price
+def enter_position(exchange, symbol, cur_price, position, usdt):
+    global enter_price, first_time_long, first_time_short, last_price, buy_price, sell_price
     amount1 = cal_amount(usdt, cur_price, leverage)
-    if flow == "up":         #rsi가 40 이하
-        if cur_price > long_target:
-            if candle_shape == "morning star" or candle_shape == "hammer" or candle_shape == "reverse hammer" or candle_shape == "up grap":
+    if flow == "up" and flow_1 == "up":         #이동평균 > 0
+        first_time_short = 1
+        if first_time_long == 1:
+            buy_price = cur_price + 20
+            last_price = cur_price
+            first_time_long = 0
+        
+        else:          
+            if cur_price < last_price:
+                buy_price = cur_price + 20
+                last_price = cur_price
+                
+            elif cur_price >= buy_price:
                 position['type'] = 'long'
                 position['amount'] = amount1
                 exchange.create_market_buy_order(symbol=symbol, amount=amount1)
                 enter_price = cur_price
-                text = "드가자~ 잔액:{}, 포지션: long, 캔들모양:{}".format(usdt, candle_shape)
+                text = "드가자~ 현재가:{}, 잔액:{}, 포지션: long".format(cur_price, usdt)
                 send_message(text)
-            
-    elif flow == "down":      #rsi가 60 이상
-        if cur_price < short_target:
-            if candle_shape == "night star" or candle_shape == "hanging" or candle_shape == "meteor" or candle_shape == "down grap":    
+                   
+    elif flow == "down" and flow_1 == "down":      #이동평균 < 0
+        first_time_long = 1
+        if first_time_short == 1:
+            sell_price = cur_price - 20
+            last_price = cur_price
+            first_time_short = 0
+        else:
+            if cur_price > last_price:
+                sell_price = cur_price - 20
+                last_price = cur_price
+                
+            elif cur_price <= sell_price:
                 position['type'] = 'short'
                 position['amount'] = amount1
                 exchange.create_market_sell_order(symbol=symbol, amount=amount1)
                 enter_price = cur_price
-                text = "드가자~ 잔액:{}, 포지션: short, 캔들모양:{}".format(usdt, candle_shape)
+                text = "드가자~ 현재가:{}, 잔액:{}, 포지션: short".format(cur_price, usdt)
                 send_message(text)
+        
+        
 
 #포지션 종료 함수
 def exit_position(exchange, symbol, position, cur_price, enter_price):
-    global target, sell_long, sell_short
+    global target, close_long, close_short
     if position['type'] == 'long':
+        if target == 0:
+            target = enter_price * (1 + 0.004)
+        
+        if cur_price < enter_price * (1 - 0.002):
+            exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
+            position['type'] = None
+            text = "손절합니다.. 현재가:{}".format(cur_price)
+            send_message(text)
+        if cur_price > target:
+            close_long = target
+            target += 80
+        if cur_price < close_long - 30: 
+            exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
+            position['type'] = None 
+            text = "개꿀따라시! 현재가:{}".format(cur_price)
+            send_message(text)
+            
+    elif position['type'] == 'short':
+        if target == 0:    
+            target = enter_price * (1 - 0.004)
+
+        if cur_price > enter_price * (1 + 0.002):
+            exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
+            position['type'] = None 
+            text = "손절합니다.. 현재가:{}".format(cur_price)
+            send_message(text)
+        if cur_price < target:
+            close_short = target
+            target -= 80
+        if cur_price > close_short + 30:
+            exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
+            position['type'] = None 
+            text = "개꿀따라시! 현재가:{}".format(cur_price)
+            send_message(text)
+            
+#스페셜 포지션 진입
+def special_enter_position(exchange, symbol, position, cur_price, usdt):
+    global enter_price, leverage
+    set_leverage(5, binance)
+    leverage = 5
+    amount1 = cal_amount(usdt, cur_price, leverage)
+    if tools.rsi(exchange, symbol) == "down":
+        if tools.candle(exchange, symbol) == "meteor":
+            position['type'] = 'special short'
+            position['amount'] = amount1
+            exchange.create_market_sell_order(symbol=symbol, amount=amount1)
+            enter_price = cur_price
+            text = "스페셜 포지션 드가자~ 현재가:{}, 잔액:{}, 포지션: short".format(cur_price, usdt)
+            send_message(text)
+    elif tools.rsi(exchange, symbol) == "up":
+        if tools.candle(exchange, symbol) == "hammer":
+            position['type'] = 'special long'
+            position['amount'] = amount1
+            exchange.create_market_buy_order(symbol=symbol, amount=amount1)
+            enter_price = cur_price
+            text = "스페셜 포지션 드가자~ 현재가:{}, 잔액:{}, 포지션: long".format(cur_price, usdt)
+#스페셜 포지션 정리
+def special_exit_position(exchange, symbol, position, cur_price, enter_price):
+    global target, close_long, close_short
+    if position['type'] == 'special long':
         if target == 0:
             target = enter_price * (1 + 0.008)
         
         if cur_price < enter_price * (1 - 0.004):
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None
-            text = "손절합니다.. "
+            text = "손절합니다.. 현재가:{}".format(cur_price)
             send_message(text)
         if cur_price > target:
-            sell_long = target
-            target += enter_price * (0.002)
-        if cur_price < sell_long - enter_price * (0.001): 
+            close_long = target
+            target = cur_price
+        if cur_price < close_long - 40: 
             exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
-            text = "개꿀따라시! "
+            text = "개꿀따라시! 현재가:{}".format(cur_price)
             send_message(text)
-    elif position['type'] == 'short':
+            
+    elif position['type'] == 'special short':
         if target == 0:    
             target = enter_price * (1 - 0.008)
 
         if cur_price > enter_price * (1 + 0.004):
             exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
-            text = "손절합니다.. "
+            text = "손절합니다.. 현재가:{}".format(cur_price)
             send_message(text)
         if cur_price < target:
-            sell_short = target
-            target -= enter_price * (0.002)
-        if cur_price > sell_short + enter_price * (0.001):
+            close_short = target
+            target -= cur_price
+        if cur_price > close_short + 40:
             exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
             position['type'] = None 
-            text = "개꿀따라시! "
+            text = "개꿀따라시! 현재가:{}".format(cur_price)
             send_message(text)
-        
+
+#포지션 강제 종료
+def super_exit_position(exchange, symbol, position, cur_price):
+    if position['type'] == 'long':
+        exchange.create_market_sell_order(symbol=symbol, amount=position['amount'])
+        position['type'] = None
+        text = "일단 빼.. 현재가:{}".format(cur_price)
+        send_message(text)
+    elif position['type'] == 'short':
+        exchange.create_market_buy_order(symbol=symbol, amount=position['amount'])
+        position['type'] = None
+        text = "일단 빼.. 현재가:{}".format(cur_price)
+        send_message(text)
+
 #레버리지 설정
 markets = binance.load_markets()
 symbol = "BTC/USDT"
 market = binance.market(symbol)
-leverage = 10
+leverage = 1
 
 resp = binance.fapiPrivate_post_leverage({
     'symbol': market['id'],
     'leverage': leverage
 })
+
+def set_leverage(leverage, binance):
+    symbol = "BTC/USDT"
+    market = binance.market(symbol)
+
+    resp = binance.fapiPrivate_post_leverage({
+        'symbol': market['id'],
+        'leverage': leverage
+    })
         
 #동작
 symbol = "BTC/USDT"
-long_target, short_target = tools.cal_target(binance, symbol)
 balance = binance.fetch_balance()
 usdt = balance['free']['USDT']
 position = {
@@ -125,14 +224,15 @@ position = {
 enter_price = 0
 
 target = 0
-sell_long = 0
-sell_short = 1000000
-second_chance = 1
-third_chance = 1
+close_long = 0
+close_short = 1000000
+first_time_long = 1
+first_time_short = 1
 
+send_message("Start trading")
+print("Start trading")
 while True: 
     try:
-        long_target, short_target = tools.cal_target(binance, symbol)
         balance = binance.fetch_balance()
         usdt = balance['free']['USDT']
 
@@ -141,25 +241,51 @@ while True:
         cur_price = ticker['last']
         
         #시장 흐름 파악
-        flow = tools.rsi(binance, symbol, cur_price)
-        candle_shape = tools.candle(binance, symbol, cur_price)
+        flow = tools.ma(binance, symbol)
+        flow_1 = tools.ma_1(binance, symbol)
         
         #포지션 진입
         if position['type'] == None:
-            enter_position(binance, symbol, cur_price, long_target, short_target, position, usdt, candle_shape)
+            enter_position(binance, symbol, cur_price, position, usdt)
         
         #포지션 정리
         else:    
             exit_position(binance, symbol, position, cur_price, enter_price)
             if position['type'] is None:
                 target = 0
-                sell_long = 0
-                sell_short = 1000000
+                close_long = 0
+                close_short = 1000000
+                first_time_short, first_time_long = 1, 1
                 position['amount'] = 0
                 balance = binance.fetch_balance()
                 usdt = balance['free']['USDT']
                 send_message("잔액:{}".format(usdt))
         time.sleep(0.5)
-        print(flow, candle_shape)
+        
+        #스페셜 포지션 진입
+        if tools.rsi(binance, symbol) == "down":
+            if tools.candle(binance, symbol) == "meteor":
+                if position['type'] != None:
+                    super_exit_position(binance, symbol, position, cur_price)
+                special_enter_position(binance, symbol, position, cur_price, usdt)
+                    
+        elif tools.rsi(binance, symbol) == "up":
+            if tools.candle(binance, symbol) == "hammer":
+                if position['type'] != None:
+                    super_exit_position(binance, symbol, position, cur_price)
+                special_enter_position(binance, symbol, position, cur_price, usdt)
+        
+        #스페셜 포지션 정리
+        if position['type'] == "special long" or position['type'] == "special short":
+            special_exit_position(binance, symbol, position, cur_price, enter_price)
+            if position['type'] == None:
+                set_leverage(1, binance)
+                target = 0
+                close_long = 0
+                close_short = 1000000
+                position['amount'] = 0
+                balance = binance.fetch_balance()
+                usdt = balance['free']['USDT']
+                send_message("잔액:{}".format(usdt))
     except Exception as e:
         print(e)
