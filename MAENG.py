@@ -8,6 +8,7 @@ import tools
 import math
 import requests
 import telegram
+import schedule
 
 #바이낸스 객체 생성
 api_key = "mF7PJ1yW3YtETZi4uxjDpf5NQGJO2bKedAEMnzBagdux37s5vA8IKnAwhq5CPHZy"
@@ -28,6 +29,15 @@ def send_message(text):
     chat_id = 5135122806
     bot = telegram.Bot(token = tele_token)
     bot.sendMessage(chat_id = chat_id, text = text)
+    
+#작동 확인 메세지
+def check_working():
+    tele_token = "5210226721:AAG95BNFRPXRME5MU_ytI_JIx7wgiW1XASU"
+    chat_id = 5135122806
+    bot = telegram.Bot(token = tele_token)
+    bot.sendMessage(chat_id = chat_id, text = "정상 작동 중")
+    
+schedule.every(30).minutes.do(check_working)
 
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price, leverage):
@@ -233,6 +243,8 @@ send_message("Start trading")
 print("Start trading")
 while True: 
     try:
+        schedule.run_pending()
+        
         balance = binance.fetch_balance()
         usdt = balance['free']['USDT']
 
