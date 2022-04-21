@@ -79,12 +79,11 @@ def ma(exchange, symbol):
     ma25 = sum(df.iloc[-3:-28:-1]['close']) / 25
     ma_3 = ma7 - ma25
     
-    vol = df.iloc[-2]['volume']
-    if vol >= 777:
-        if ma_1 - ma_2 > 0 and ma_2 - ma_3 > 0:
-            return "up"
-        elif ma_1 - ma_2 < 0 and ma_2 - ma_3 < 0:
-            return "down"
+   
+    if ma_1 - ma_2 > 0 and ma_2 - ma_3 > 0:
+        return "up"
+    elif ma_1 - ma_2 < 0 and ma_2 - ma_3 < 0:
+        return "down"
         
 #1분 이평선
 def ma_1(exchange, symbol):
@@ -106,6 +105,7 @@ def ma_1(exchange, symbol):
     ma7 = sum(df.iloc[-3:-10:-1]['close']) / 7
     ma25 = sum(df.iloc[-3:-28:-1]['close']) / 25
     ma_3 = ma7 - ma25
+    
     if ma_1 - ma_2 > 0 and ma_2 - ma_3 > 0:
         return "up"
     elif ma_1 - ma_2 < 0 and ma_2 - ma_3 < 0:

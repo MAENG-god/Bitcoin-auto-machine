@@ -29,15 +29,17 @@ def send_message(text):
     chat_id = 5135122806
     bot = telegram.Bot(token = tele_token)
     bot.sendMessage(chat_id = chat_id, text = text)
-    
-#작동 확인 메세지
-def check_working():
+
+#상태 확인 메세지
+def check_condition():
+    global flow, flow_1, position, usdt
     tele_token = "5210226721:AAG95BNFRPXRME5MU_ytI_JIx7wgiW1XASU"
     chat_id = 5135122806
     bot = telegram.Bot(token = tele_token)
-    bot.sendMessage(chat_id = chat_id, text = "정상 작동 중")
+    text = "현재 flow:{}, flow_1:{}, 포지션:{}, 잔고:{}".format(flow, flow_1, position['type'], usdt)
+    bot.sendMessage(chat_id = chat_id, text = text)
     
-schedule.every(30).minutes.do(check_working)
+schedule.every(30).minutes.do(check_condition)
 
 #수량계산 함수
 def cal_amount(usdt_balance, cur_price, leverage):
@@ -48,7 +50,7 @@ def cal_amount(usdt_balance, cur_price, leverage):
 
 #포지션 진입 함수
 def enter_position(exchange, symbol, cur_price, position, usdt):
-    global enter_price, first_time_long, first_time_short, last_price, buy_price, sell_price
+    global enter_price, first_time_long, first_time_short, last_price, buy_price, sell_price, flow, flow_1
     amount1 = cal_amount(usdt, cur_price, leverage)
     if flow == "up" and flow_1 == "up":         #이동평균 > 0
         first_time_short = 1
@@ -275,20 +277,21 @@ while True:
         time.sleep(0.5)
         
         #스페셜 포지션 진입
-        if tools.rsi(binance, symbol) == "down":
-            if tools.candle(binance, symbol) == "meteor":
-                if position['type'] != None:
-                    super_exit_position(binance, symbol, position, cur_price)
-                special_enter_position(binance, symbol, position, cur_price, usdt)
-                    
-        elif tools.rsi(binance, symbol) == "up":
-            if tools.candle(binance, symbol) == "hammer":
-                if position['type'] != None:
-                    super_exit_position(binance, symbol, position, cur_price)
-                special_enter_position(binance, symbol, position, cur_price, usdt)
+        if position['type'] != "special long" and position['type'] != "special short":
+            if tools.rsi(binance, symbol) == "down":
+                if tools.candle(binance, symbol) == "meteor":
+                    if position['type'] != None:
+                        super_exit_position(binance, symbol, position, cur_price)
+                    special_enter_position(binance, symbol, position, cur_price, usdt)
+                        
+            elif tools.rsi(binance, symbol) == "up":
+                if tools.candle(binance, symbol) == "hammer":
+                    if position['type'] != None:
+                        super_exit_position(binance, symbol, position, cur_price)
+                    special_enter_position(binance, symbol, position, cur_price, usdt)
         
         #스페셜 포지션 정리
-        if position['type'] == "special long" or position['type'] == "special short":
+        elif position['type'] == "special long" or position['type'] == "special short":
             special_exit_position(binance, symbol, position, cur_price, enter_price)
             if position['type'] == None:
                 set_leverage(1, binance)
